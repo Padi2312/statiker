@@ -2,7 +2,29 @@
 
 A simple static file hosting server written in Rust.
 
-# CLI 
+# Setup
+
+## Download from releases
+You can download prebuild binaries from the release section.
+
+**INFO:** On windows you may get a false positiv malware detection from defender.
+
+## Build it yourself
+In case you don't trust anyone, you can look up the source code and build it yourself.
+
+Make sure you have setup rust and cargo correctly.
+
+Proceed with the following steps:
+```sh
+git clone https://github.com/Padi2312/statiker.git
+cd statiker
+cargo build --release
+
+# Run it with (or any different location where you build is)
+./target/release/statiker 
+```
+
+# Usage 
 ```
 Usage: statiker [OPTIONS] --dir <DIR>
 
