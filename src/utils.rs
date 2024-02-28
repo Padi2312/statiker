@@ -21,6 +21,7 @@ pub fn get_content_type(file_path: &PathBuf) -> &'static str {
         "jpg" | "jpeg" => "image/jpeg",
         "gif" => "image/gif",
         "svg" => "image/svg+xml",
+        "mp3"|"wav"|"ogg" => "audio/mpeg", 
         _ => "application/octet-stream", // Default binary type
     }
 }
