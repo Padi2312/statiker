@@ -1,16 +1,16 @@
+use async_std::net::TcpStream;
+use async_std::prelude::*;
 use std::fs;
-use std::io::prelude::*;
-use std::net::TcpStream;
 use std::path::Path;
 
 use crate::logs::Logger;
 use crate::utils::get_content_type; // Add missing import statement
 
-pub fn handle_connection(mut stream: TcpStream, root_dir: &Path) {
+pub async fn handle_connection(mut stream: TcpStream, root_dir: &Path) {
     let logger = Logger::new();
 
     let mut buffer = [0; 1024];
-    stream.read(&mut buffer).unwrap();
+    stream.read(&mut buffer).await.unwrap();
 
     // Parse the requested path from the HTTP request
     let request = String::from_utf8_lossy(&buffer[..]);
@@ -29,7 +29,7 @@ pub fn handle_connection(mut stream: TcpStream, root_dir: &Path) {
         .as_str(),
     );
 
-    let file_path = get_file_path(request_path, root_dir);
+    let file_path = get_file_path(request_path, &root_dir);
     let content_type = get_content_type(&file_path);
 
     // Serve the requested file if it exists, otherwise return a 404 response
@@ -49,9 +49,9 @@ pub fn handle_connection(mut stream: TcpStream, root_dir: &Path) {
         content_type
     );
 
-    stream.write_all(response.as_bytes()).unwrap();
-    stream.write_all(&contents).unwrap();
-    stream.flush().unwrap();
+    stream.write_all(response.as_bytes()).await.unwrap();
+    stream.write_all(&contents).await.unwrap();
+    stream.flush().await.unwrap();
 }
 
 fn get_request_method(request: &str) -> &str {
