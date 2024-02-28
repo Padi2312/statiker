@@ -8,4 +8,5 @@ authors = ["Patrick Arndt <patrick.arndt.99@web.de>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.34"
 clap = { version = "4.5.1", features=["cargo"]}

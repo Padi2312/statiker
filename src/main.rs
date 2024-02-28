@@ -4,6 +4,7 @@ use utils::parse_arguments;
 
 pub mod connection;
 pub mod utils;
+pub mod logs;
 
 fn main() {
     let config = parse_arguments();
