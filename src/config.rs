@@ -7,25 +7,6 @@ pub struct ServerConfig {
     pub port: u16,
 }
 
-pub fn get_content_type(file_path: &PathBuf) -> &'static str {
-    let ext = file_path
-        .extension()
-        .and_then(std::ffi::OsStr::to_str)
-        .unwrap_or_default();
-
-    match ext {
-        "html" => "text/html",
-        "css" => "text/css",
-        "js" => "application/javascript",
-        "png" => "image/png",
-        "jpg" | "jpeg" => "image/jpeg",
-        "gif" => "image/gif",
-        "svg" => "image/svg+xml",
-        "mp3"|"wav"|"ogg" => "audio/mpeg", 
-        _ => "application/octet-stream", // Default binary type
-    }
-}
-
 pub fn parse_arguments() -> ServerConfig {
     let matches = command!()
         .arg(
@@ -34,7 +15,7 @@ pub fn parse_arguments() -> ServerConfig {
                 .long("dir")
                 .value_name("DIR")
                 .help("Sets the root directory to serve files from")
-                .required(true),
+                .default_value("."),
         )
         .arg(
             Arg::new("address")

@@ -29,7 +29,7 @@ cargo build --release
 Usage: statiker [OPTIONS] --dir <DIR>
 
 Options:
-  -d, --dir <DIR>          Sets the root directory to serve files from
+  -d, --dir <DIR>          Sets the root directory to serve files from [default: "."]
   -a, --address <ADDRESS>  Sets the address to bind the server to [default: 0.0.0.0]
   -p, --port <PORT>        Sets the port to bind the server to [default: 8080]
   -h, --help               Print help
