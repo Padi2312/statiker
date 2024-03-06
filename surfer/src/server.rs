@@ -6,9 +6,9 @@ use async_std::prelude::*;
 use futures::StreamExt;
 use std::fs;
 
-use crate::http::request::request::Request;
-use crate::http::utils::get_content_type;
 use crate::logs::Logger;
+use crate::request::Request;
+use crate::utils::get_content_type;
 
 pub struct Server {
     pub address: String,
@@ -56,7 +56,20 @@ impl Server {
             stream.write_all(response.as_bytes()).await.unwrap();
             stream.flush().await.unwrap();
         }
-        request.log(&logger);
+
+        let default_user_agent = String::from("N/A");
+        let user_agent = request
+            .headers
+            .get("User-Agent")
+            .unwrap_or(&default_user_agent);
+
+        logger.info(
+            format!(
+                "{} {} | User-Agent: {}",
+                request.method, request.path, user_agent
+            )
+            .as_str(),
+        );
 
         match request.method.as_str() {
             "GET" => {

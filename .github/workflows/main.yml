@@ -51,7 +51,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           # use-cross: true
-          command: build
+          command: build --directory statiker
           args: --verbose --release --target ${{ matrix.target }}
 
       - name: Build archive

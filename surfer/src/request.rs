@@ -2,8 +2,6 @@ use async_std::net::TcpStream;
 use async_std::prelude::*;
 use std::collections::HashMap;
 
-use crate::logs::Logger;
-
 #[derive(Debug)]
 pub struct Request {
     pub method: String,
@@ -84,13 +82,4 @@ impl Request {
         }
     }
 
-    pub fn log(&self, logger: &Logger) {
-        let default_user_agent = String::from("N/A").to_string();
-        let user_agent = self
-            .headers
-            .get("User-Agent")
-            .unwrap_or(&default_user_agent);
-
-        logger.info(format!("{} {} | User-Agent: {}", self.method, self.path, user_agent).as_str());
-    }
 }

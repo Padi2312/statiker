@@ -1,8 +1,6 @@
 use config::parse_arguments;
+use surfer::server::Server;
 
-use crate::http::server::Server;
-pub mod http;
-pub mod logs;
 pub mod config;
 
 #[async_std::main]
