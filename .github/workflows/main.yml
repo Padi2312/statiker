@@ -50,7 +50,6 @@ jobs:
       - name: Build
         uses: actions-rs/cargo@v1
         with:
-          use-cross: true
           command: build
           args: --verbose --release --target ${{ matrix.target }} 
 
@@ -62,10 +61,10 @@ jobs:
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.build}}" = "windows-gnu" ]; then
-            mv "statiker/target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/$binary_name.exe"
+            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/$binary_name.exe"
             echo "ASSET=$dirname/$binary_name.exe" >> $GITHUB_ENV
           else
-            mv "statiker/target/${{ matrix.target }}/release/$binary_name" "$dirname/$binary_name"
+            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname/$binary_name"
             echo "ASSET=$dirname/$binary_name" >> $GITHUB_ENV
           fi
 
