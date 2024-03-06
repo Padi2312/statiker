@@ -66,6 +66,7 @@ impl Server {
             let response = self.format_response(status_line, &content.len(), "text/plain");
             let response = [response.as_bytes(), &content].concat();
             self.write_response(&mut stream, response).await;
+            return;
         }
 
         let default_user_agent = String::from("N/A");
