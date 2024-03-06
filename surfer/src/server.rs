@@ -73,7 +73,8 @@ impl Server {
 
         match request.method.as_str() {
             "GET" => {
-                let file_path = self.get_file_path(&request.path);
+                let file_path = request.path.split("?").collect::<Vec<&str>>()[0];
+                let file_path = self.get_file_path(file_path);
                 let content_type = get_content_type(&file_path);
                 // Rest of the code for handling GET requests
                 let (status_line, content) =
@@ -109,11 +110,13 @@ impl Server {
                         stream.flush().await.unwrap();
                     }
                 }
-                // Code for handling POST requests
             }
-            // Add more match arms for other HTTP methods if needed
             _ => {
-                // Code for handling unrecognized HTTP methods
+                let status_line = "HTTP/1.1 501 NOT IMPLEMENTED";
+                let content = b"501 Not Implemented".to_vec();
+                let response = self.format_response(status_line, &content.len(), "text/plain");
+                stream.write_all(response.as_bytes()).await.unwrap();
+                stream.flush().await.unwrap();
             }
         }
     }
