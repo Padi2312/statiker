@@ -51,8 +51,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           # use-cross: true
-          command: build --directory statiker
-          args: --verbose --release --target ${{ matrix.target }}
+          command: build
+          args: --verbose --release --target ${{ matrix.target }} --directory statiker
 
       - name: Build archive
         shell: bash
@@ -62,17 +62,11 @@ jobs:
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.build}}" = "windows-gnu" ]; then
-            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+            mv "statiker/target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/$binary_name.exe"
+            echo "ASSET=$dirname/$binary_name.exe" >> $GITHUB_ENV
           else
-            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
-          fi
-
-          if [ "${{ matrix.build }}" = "windows-gnu" ]; then
-            zip -r "$dirname.zip" "$dirname"
-            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-          else
-            tar -czf "$dirname.tar.gz" "$dirname"
-            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+            mv "statiker/target/${{ matrix.target }}/release/$binary_name" "$dirname/$binary_name"
+            echo "ASSET=$dirname/$binary_name" >> $GITHUB_ENV
           fi
 
       - name: Tag commit
