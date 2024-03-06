@@ -14,6 +14,7 @@ pub struct Server {
     pub address: String,
     pub port: String,
     pub root_dir: PathBuf,
+    logger: Logger,
 }
 
 impl Server {
@@ -23,24 +24,34 @@ impl Server {
             address,
             port,
             root_dir,
+            logger: Logger::new(),
         }
     }
 
     pub async fn listen(&self) {
-        let listener = TcpListener::bind(format!("{}:{}", self.address, self.port))
-            .await
-            .unwrap();
-        println!("Server running at http://{}:{}", self.address, self.port);
-        println!(
-            "Serving files from: {:?}",
-            self.root_dir.to_str().unwrap_or(".").to_string()
-        );
+        let listener = TcpListener::bind(format!("{}:{}", self.address, self.port)).await;
+        let listener = listener.expect("[ERROR] Failed binding server to address. Exiting...");
+
+        self.logger.info(&format!(
+            "Server running at http://{}:{}",
+            self.address, self.port
+        ));
+        self.logger.info(&format!(
+            "Hosting files from: {:?}",
+            self.root_dir.to_string_lossy().to_string()
+        ));
 
         listener
             .incoming()
             .for_each_concurrent(None, move |stream| async move {
-                let stream = stream.unwrap();
-                self.handle_connection(stream).await;
+                match stream {
+                    Err(_) => {
+                        self.logger.error("Error establishing connection");
+                    }
+                    Ok(stream) => {
+                        self.handle_connection(stream).await;
+                    }
+                };
             })
             .await;
     }
@@ -53,8 +64,8 @@ impl Server {
             let status_line = "HTTP/1.1 404 NOT FOUND";
             let content = b"404 Not Found".to_vec();
             let response = self.format_response(status_line, &content.len(), "text/plain");
-            stream.write_all(response.as_bytes()).await.unwrap();
-            stream.flush().await.unwrap();
+            let response = [response.as_bytes(), &content].concat();
+            self.write_response(&mut stream, response).await;
         }
 
         let default_user_agent = String::from("N/A");
@@ -88,9 +99,8 @@ impl Server {
                     };
 
                 let response = self.format_response(status_line, &content.len(), content_type);
-                stream.write_all(response.as_bytes()).await.unwrap();
-                stream.write_all(&content).await.unwrap();
-                stream.flush().await.unwrap();
+                let response = [response.as_bytes(), &content].concat();
+                self.write_response(&mut stream, response).await;
             }
             "POST" => {
                 let content_type = &request.headers.get("Content-Type");
@@ -105,9 +115,8 @@ impl Server {
                         let status_line = "HTTP/1.1 200 OK";
                         let response =
                             self.format_response(status_line, &content.len(), content_type);
-                        stream.write_all(response.as_bytes()).await.unwrap();
-                        stream.write_all(&content).await.unwrap();
-                        stream.flush().await.unwrap();
+                        let response = [response.as_bytes(), &content].concat();
+                        self.write_response(&mut stream, response).await;
                     }
                 }
             }
@@ -115,9 +124,21 @@ impl Server {
                 let status_line = "HTTP/1.1 501 NOT IMPLEMENTED";
                 let content = b"501 Not Implemented".to_vec();
                 let response = self.format_response(status_line, &content.len(), "text/plain");
-                stream.write_all(response.as_bytes()).await.unwrap();
-                stream.flush().await.unwrap();
+                let response = [response.as_bytes(), &content].concat();
+                self.write_response(&mut stream, response).await;
             }
+        }
+    }
+
+    async fn write_response(&self, stream: &mut TcpStream, response: Vec<u8>) {
+        if stream.write_all(&response).await.is_err() {
+            self.logger.error("Error writing response");
+            return;
+        }
+
+        if stream.flush().await.is_err() {
+            self.logger.error("Error flushing stream");
+            return;
         }
     }
 
