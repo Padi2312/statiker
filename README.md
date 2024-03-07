@@ -7,8 +7,6 @@ A simple static file hosting server written in Rust.
 ## Download from releases
 You can download prebuild binaries from the release section.
 
-**INFO:** On windows you may get a false positiv malware detection from defender.
-
 ## Build it yourself
 In case you don't trust anyone, you can look up the source code and build it yourself.
 
@@ -35,3 +33,9 @@ Options:
   -h, --help               Print help
   -V, --version            Print version
 ```
+
+# Project structure
+
+The project is divided into two separate crates:
+- `statiker`: The main crate containing the executable server for hosting files.
+- `surfer`: Library containing the server logic. (Own repository: [surfer](https://github.com/Padi2312/surfer))
