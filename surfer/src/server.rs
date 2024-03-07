@@ -1,31 +1,65 @@
-use async_std::fs::File;
+use async_std::fs;
 use async_std::net::TcpListener;
 use async_std::net::TcpStream;
 use async_std::path::PathBuf;
 use async_std::prelude::*;
 use futures::StreamExt;
-use std::fs;
+use std::collections::HashMap;
+use std::pin::Pin;
 
 use crate::logs::Logger;
+use crate::request::Method;
 use crate::request::Request;
+use crate::response::Response;
 use crate::utils::get_content_type;
 
 pub struct Server {
     pub address: String,
     pub port: String,
-    pub root_dir: PathBuf,
+    pub routes: HashMap<String, AsyncHandler>,
+    pub static_dirs: HashMap<String, String>,
     logger: Logger,
 }
 
+type AsyncHandler = Box<
+    dyn Fn(Request) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> + Send + 'static,
+>;
+// Route macro for registering routes in server
+#[macro_export]
+macro_rules! route {
+    ($method:ident, $path:expr, $handler:expr) => {
+        (
+            $method,
+            $path,
+            Box::new(move |request: Request| Box::pin(async move { $handler(request).await })),
+        )
+    };
+}
+
 impl Server {
-    pub fn new(address: String, port: String, root_dir: String) -> Server {
-        let root_dir = PathBuf::from(root_dir);
+    pub fn new(address: String, port: String) -> Server {
         Server {
             address,
             port,
-            root_dir,
             logger: Logger::new(),
+            routes: HashMap::new(),
+            static_dirs: HashMap::new(),
         }
+    }
+
+    pub async fn register_static_dir(&mut self, url_path: &str, dir_path: Option<&str>) {
+        let dir_path = PathBuf::from(dir_path.unwrap_or(url_path));
+        // Since we're in an async block, we need to lock asynchronously to modify shared state
+        self.static_dirs.insert(
+            format!("GET {}", url_path),
+            dir_path.to_string_lossy().to_string(),
+        );
+    }
+
+    pub fn register_route(&mut self, data: (Method, &str, AsyncHandler)) {
+        let (method, path, handler) = data;
+        let index = format!("{} {}", method.to_string(), path);
+        self.routes.insert(index, handler);
     }
 
     pub async fn listen(&self) {
@@ -36,10 +70,15 @@ impl Server {
             "Server running at http://{}:{}",
             self.address, self.port
         ));
-        self.logger.info(&format!(
-            "Hosting files from: {:?}",
-            self.root_dir.to_string_lossy().to_string()
-        ));
+        self.static_dirs.iter().for_each(|(route, dir)| {
+            self.logger.info(&format!(
+                "Hosting files from '{}' at {}",
+                dir, route
+            ));
+        });
+        self.routes.iter().for_each(|(route, _)| {
+            self.logger.info(&format!("Registered route: {}", route));
+        });
 
         listener
             .incoming()
@@ -61,74 +100,99 @@ impl Server {
         let mut request = Request::new();
         if request.parse(&mut stream).await.is_err() {
             logger.error("Error parsing request");
-            let status_line = "HTTP/1.1 404 NOT FOUND";
-            let content = b"404 Not Found".to_vec();
-            let response = self.format_response(status_line, &content.len(), "text/plain");
-            let response = [response.as_bytes(), &content].concat();
-            self.write_response(&mut stream, response).await;
+            self.send_response(
+                &mut stream,
+                "HTTP/1.1 400 Bad request",
+                b"404 Not Found".to_vec(),
+                "text/plain",
+            )
+            .await;
             return;
         }
 
-        let default_user_agent = String::from("N/A");
-        let user_agent = request
-            .headers
-            .get("User-Agent")
-            .unwrap_or(&default_user_agent);
+        logger.info(&format!(
+            "{} {} | User-Agent: {}",
+            request.method,
+            request.path,
+            request
+                .headers
+                .get("User-Agent")
+                .unwrap_or(&String::from("N/A"))
+        ));
 
-        logger.info(
-            format!(
-                "{} {} | User-Agent: {}",
-                request.method, request.path, user_agent
-            )
-            .as_str(),
-        );
+        let route_index = format!("{} {}", request.method.as_str(), request.path.as_str());
 
-        match request.method.as_str() {
-            "GET" => {
-                let file_path = request.path.split("?").collect::<Vec<&str>>()[0];
-                let file_path = self.get_file_path(file_path);
-                let content_type = get_content_type(&file_path);
-                // Rest of the code for handling GET requests
-                let (status_line, content) =
-                    if file_path.exists().await && file_path.is_file().await {
-                        (
-                            "HTTP/1.1 200 OK",
-                            fs::read(&file_path).unwrap_or_else(|_| Vec::new()),
-                        )
-                    } else {
-                        ("HTTP/1.1 404 NOT FOUND", b"404 Not Found".to_vec())
-                    };
-
-                let response = self.format_response(status_line, &content.len(), content_type);
-                let response = [response.as_bytes(), &content].concat();
-                self.write_response(&mut stream, response).await;
-            }
-            "POST" => {
-                let content_type = &request.headers.get("Content-Type");
-                if content_type.is_some() {
-                    let content_type = content_type.unwrap();
-                    if content_type == "application/json" {
-                        // Rest of the code for handling POST requests
-                    } else {
-                        let mut file = File::create("uploaded.bin").await.unwrap();
-                        file.write_all(&request.body).await.unwrap();
-                        let content = b"File uploaded".to_vec();
-                        let status_line = "HTTP/1.1 200 OK";
-                        let response =
-                            self.format_response(status_line, &content.len(), content_type);
-                        let response = [response.as_bytes(), &content].concat();
-                        self.write_response(&mut stream, response).await;
-                    }
-                }
-            }
-            _ => {
-                let status_line = "HTTP/1.1 501 NOT IMPLEMENTED";
-                let content = b"501 Not Implemented".to_vec();
-                let response = self.format_response(status_line, &content.len(), "text/plain");
-                let response = [response.as_bytes(), &content].concat();
-                self.write_response(&mut stream, response).await;
-            }
+        if let Some((request_url_path, dir_path)) = self
+            .static_dirs
+            .iter()
+            .find(|(url_path, _)| route_index.starts_with(url_path.as_str()))
+        {
+            let relative_path = route_index.trim_start_matches(request_url_path);
+            let relative_path = relative_path.split('?').next().unwrap_or(relative_path);
+            self.provide_static_dir(PathBuf::from(dir_path), relative_path.to_string())
+                .await
+                .send(&mut stream)
+                .await;
+            return;
         }
+
+        // If not found in static_dirs, try to match in routes
+        if let Some(route) = self.routes.get(&route_index) {
+            route(request).await.send(&mut stream).await;
+            return;
+        }
+
+        // If no route is found, return 404 Not Found
+        self.send_response(
+            &mut stream,
+            "HTTP/1.1 404 NOT FOUND",
+            b"404 Not Found".to_vec(),
+            "text/plain",
+        )
+        .await;
+    }
+
+    async fn provide_static_dir(
+        &self,
+        // request: Request,
+        dir_path: PathBuf,
+        relative_path: String,
+    ) -> Response {
+        print!("{:?}", relative_path);
+        let mut file_path = dir_path.clone();
+        if relative_path.ends_with("/") || relative_path.is_empty() {
+            file_path.push("index.html");
+        } else {
+            file_path.push(relative_path.trim_start_matches('/'));
+        }
+        let content_type = get_content_type(&file_path);
+        let content = if file_path.exists().await && file_path.is_file().await {
+            fs::read(&file_path).await.unwrap_or_else(|_| Vec::new())
+        } else {
+            b"404 Not Found".to_vec()
+        };
+
+        let mut headers: HashMap<String, String> = HashMap::new();
+        headers.insert("Content-Type".to_string(), content_type.to_string());
+        headers.insert("Server".to_string(), "Statiker".to_string());
+        Response::new(200, headers, content)
+    }
+
+    async fn send_response(
+        &self,
+        stream: &mut TcpStream,
+        status_line: &str,
+        content: Vec<u8>,
+        content_type: &str,
+    ) {
+        let response = format!(
+            "{}\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n",
+            status_line,
+            &content.len(),
+            content_type
+        );
+        let response = [response.as_bytes(), &content].concat();
+        self.write_response(stream, response).await;
     }
 
     async fn write_response(&self, stream: &mut TcpStream, response: Vec<u8>) {
@@ -141,27 +205,5 @@ impl Server {
             self.logger.error("Error flushing stream");
             return;
         }
-    }
-
-    fn format_response(
-        &self,
-        status_line: &str,
-        content_length: &usize,
-        content_type: &str,
-    ) -> String {
-        format!(
-            "{}\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n",
-            status_line, content_length, content_type
-        )
-    }
-
-    fn get_file_path(&self, requested_path: &str) -> PathBuf {
-        let mut file_path = self.root_dir.clone();
-        if requested_path == "/" {
-            file_path.push("index.html");
-        } else {
-            file_path.push(requested_path.trim_start_matches('/'));
-        }
-        file_path
     }
 }

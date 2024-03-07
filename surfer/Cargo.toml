@@ -1,6 +1,6 @@
 [package]
 name = "surfer"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A simple web server"
 authors = ["Patrick Arndt <patrick.arndt.99@web.de>"]

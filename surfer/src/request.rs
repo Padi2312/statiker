@@ -2,6 +2,49 @@ use async_std::net::TcpStream;
 use async_std::prelude::*;
 use std::collections::HashMap;
 
+pub enum Method {
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    HEAD,
+    OPTIONS,
+    CONNECT,
+    TRACE,
+}
+
+impl Method {
+    pub fn from_string(method: &str) -> Method {
+        match method {
+            "GET" => Method::GET,
+            "POST" => Method::POST,
+            "PUT" => Method::PUT,
+            "DELETE" => Method::DELETE,
+            "PATCH" => Method::PATCH,
+            "HEAD" => Method::HEAD,
+            "OPTIONS" => Method::OPTIONS,
+            "CONNECT" => Method::CONNECT,
+            "TRACE" => Method::TRACE,
+            _ => Method::GET,
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Method::GET => "GET".to_string(),
+            Method::POST => "POST".to_string(),
+            Method::PUT => "PUT".to_string(),
+            Method::DELETE => "DELETE".to_string(),
+            Method::PATCH => "PATCH".to_string(),
+            Method::HEAD => "HEAD".to_string(),
+            Method::OPTIONS => "OPTIONS".to_string(),
+            Method::CONNECT => "CONNECT".to_string(),
+            Method::TRACE => "TRACE".to_string(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Request {
     pub method: String,
@@ -81,5 +124,4 @@ impl Request {
             }
         }
     }
-
 }
