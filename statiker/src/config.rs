@@ -5,6 +5,7 @@ pub struct ServerConfig {
     pub root_dir: PathBuf,
     pub address: String,
     pub port: u16,
+    pub enable_file_upload: bool,
 }
 
 pub fn parse_arguments() -> ServerConfig {
@@ -33,6 +34,18 @@ pub fn parse_arguments() -> ServerConfig {
                 .help("Sets the port to bind the server to")
                 .default_value("8080"),
         )
+        .arg(
+            Arg::new("enable_upload")
+                .short('u')
+                .long("enable_upload")
+                .required(false)
+                .num_args(0)
+                .default_value("false")
+                .default_missing_value("true")
+                .help(
+                    "Enables file upload at route '/' and saves files to root directory of server",
+                ),
+        )
         .get_matches();
 
     let root_dir = matches.get_one::<String>("root_dir").unwrap();
@@ -42,11 +55,15 @@ pub fn parse_arguments() -> ServerConfig {
         .unwrap()
         .parse::<u16>()
         .unwrap();
+    let enable_file_upload: bool = *matches
+        .get_one::<bool>("enable_upload")
+        .unwrap();
 
     let config = ServerConfig {
         root_dir: PathBuf::from(root_dir),
         address: address.to_string(),
         port,
+        enable_file_upload,
     };
     config
 }
