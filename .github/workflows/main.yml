@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          submodules: 'recursive' # Add this line to checkout submodules
 
       # Get version from cargo.toml
       - name: Get version
