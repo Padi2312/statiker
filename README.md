@@ -4,11 +4,10 @@ A simple static file hosting server wRiTtEn iN rUsT.
 
 It provides a simple way to host files from a directory.
 
-It also supports uploading files to the server using a simple web interface. 
-Those files are saved to the root directory of the server and also served by the server. See more about this in the [Enable upload page](#enable-upload-page) section.
+It also supports uploading files to the server using a simple web interface. \
+Those files are saved to the root directory of the server and also served by the server. 
 
 # Setup
-
 
 ## Docker
 You can use the docker image to run the server.
