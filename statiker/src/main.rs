@@ -1,6 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
-use config::parse_arguments;
 use surfer::{
     headers,
     request::{Method::GET, Method::POST, Request},
@@ -65,13 +64,20 @@ async fn upload_page(_: Request) -> Response {
 
 #[async_std::main]
 async fn main() {
-    let config = parse_arguments();
+    let args: Vec<String> = env::args().collect();
+    let config: config::ServerConfig;
+    if args.len() > 1 {
+        config = config::parse_arguments();
+    } else {
+        config = config::get_from_env();
+    }
+
     let mut server = Server::new(config.address.to_string(), config.port.to_string());
     server
-        .register_static_dir("/", Some(config.root_dir.to_str().unwrap_or(".")))
+        .register_static_dir("/", Some(config.root_dir.to_str().unwrap_or("./public")))
         .await;
 
-    let static_dir = config.root_dir.to_str().unwrap_or(".").to_string();
+    let static_dir = config.root_dir.to_str().unwrap_or("./public").to_string();
     if config.enable_file_upload {
         server.register_route(route!(GET, "/upload", upload_page));
         server.register_route(route!(POST, "/upload", upload, static_dir));

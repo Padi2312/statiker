@@ -9,10 +9,22 @@ Those files are saved to the root directory of the server and also served by the
 
 # Setup
 
-## Download from releases
+
+## Docker
+You can use the docker image to run the server.
+
+```sh
+docker run -d -p 8080:8080 -v /path/to/your/files:/app/public padi2312/statiker
+```
+
+## Docker Compose
+You can also use docker-compose to run the server.
+Have a look at the  `docker-compose.yml` file in the repository.
+
+## Binary
 You can download prebuild binaries from the release section.
 
-## Build it yourself
+## Build from source
 In case you don't trust anyone, you can look up the source code and build it yourself.
 
 Make sure you have setup rust and cargo correctly.
@@ -23,8 +35,7 @@ git clone https://github.com/Padi2312/statiker.git
 cd statiker
 cargo build --release
 
-# Run it with (or any different location where you build is)
-./target/release/statiker 
+./statiker/target/release/statiker 
 ```
 
 # Usage 
@@ -32,24 +43,20 @@ cargo build --release
 Usage: statiker [OPTIONS] --dir <DIR>
 
 Options:
-  -d, --dir <DIR>          Sets the root directory to serve files from [default: "."]
+  -d, --dir <DIR>          Sets the root directory to serve files from [default: "./public"]
   -a, --address <ADDRESS>  Sets the address to bind the server to [default: 0.0.0.0]
   -p, --port <PORT>        Sets the port to bind the server to [default: 8080]
-  -u, --enable_upload      Enables file upload at route '/' and saves files to root directory of server
+  -u, --enable_upload      Enables file upload at route '/upload' and saves files to root directory of server
   -h, --help               Print help
   -V, --version            Print version
 ```
 
-# Enable upload page
-To enable the upload page, you can use the `-u` or `--enable_upload` flag. This will enable the upload page at route `/upload`. 
+# Environment variables 
+Environment variables are used if no command line arguments are provided.
 
-All files uploaded will be saved to the root directory of the server and also served by the server.
-
-> **NOTE:** In case you're uploading files with the same name, the old files will be overwritten by the new ones. (Currently working on this for a better solution.)
-
-
-# Project structure
-
-The project is divided into two separate crates:
-- `statiker`: The main crate containing the executable server for hosting files.
-- `surfer`: Library containing the server logic. (Own repository: [surfer](https://github.com/Padi2312/surfer))
+| Option        | Description                                                                        | Default    |
+| ------------- | ---------------------------------------------------------------------------------- | ---------- |
+| ROOT_DIR      | Sets the root directory to serve files from                                        | "./public" |
+| ADDRESS       | Sets the address to bind the server to                                             | "0.0.0.0"  |
+| PORT          | Sets the port to bind the server to                                                | 8080       |
+| ENABLE_UPLOAD | Enables file upload at route '/upload' and saves files to root directory of server | false      |

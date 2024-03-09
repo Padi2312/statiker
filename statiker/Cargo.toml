@@ -1,6 +1,6 @@
 [package]
 name = "statiker"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Serves static files from a directory"
 authors = ["Patrick Arndt <patrick.arndt.99@web.de>"]
