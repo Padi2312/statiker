@@ -26,7 +26,7 @@ Statiker provides a simple and efficient solution for hosting files from any dir
 Run Statiker using Docker with the following command:
 
 ```sh
-docker run -d -p 8080:8080 -v /path/to/your/files:/app/public statiker/statiker
+docker run -d -p 8080:8080 -v /path/to/your/files:/app/public padi2312/statiker
 ```
 
 ### 📦 Docker Compose
