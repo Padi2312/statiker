@@ -23,6 +23,8 @@ Statiker provides a simple and efficient solution for hosting files from any dir
 ## 🛠️ Setup
 
 ### 🐳 Docker
+Docker Hub: <https://hub.docker.com/r/padi2312/statiker>
+
 Run Statiker using Docker with the following command:
 
 ```sh
