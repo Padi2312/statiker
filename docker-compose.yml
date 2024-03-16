@@ -1,8 +1,6 @@
 services:
   statiker:
-    build:
-      context: . 
-      dockerfile: Dockerfile
+    image: padi2312/statiker
     ports:
       - "8080:8080"
     volumes:
