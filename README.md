@@ -1,55 +1,75 @@
-# Statiker
+<p align="center">
+  <img src="./docs/statiker_logo.png" alt="Surfer Logo" width="200">
+</p>
 
-A simple static file hosting server wRiTtEn iN rUsT.
+<h1 align="center">Statiker</h1>
 
-It provides a simple way to host files from a directory.
+<p align="center">
+  <strong>A simple, efficient static file hosting server wRiTtEn iN rUsT.</strong>
+</p>
 
-It also supports uploading files to the server using a simple web interface. 
-Those files are saved to the root directory of the server and also served by the server. See more about this in the [Enable upload page](#enable-upload-page) section.
+Statiker provides a simple and efficient solution for hosting files from any directory.📁️ It also offers a user-friendly web interface for easy file uploads.🌐 Uploaded files are saved to the root directory and served by the server.
 
-# Setup
+## 🚀 Features
+- **Simple**: Statiker is designed to be simple and easy to use.
+- **Efficient**: It's built with Rust, so it (_should be_) fast and efficient.
+- **File Uploads**: Statiker supports file uploads with a simple web interface.
+- **Docker Support**: Run Statiker using Docker or Docker Compose.
+- **Cross-Platform**: Statiker is available as a pre-built binary for Windows, ~~macOS~~, and Linux.
+- **Environment Variables**: Use environment variables to configure Statiker.
+- **Command Line**: Use the command line to run Statiker.
+ 
 
-## Download from releases
-You can download prebuild binaries from the release section.
+## 🛠️ Setup
 
-## Build it yourself
-In case you don't trust anyone, you can look up the source code and build it yourself.
+### 🐳 Docker
+Run Statiker using Docker with the following command:
 
-Make sure you have setup rust and cargo correctly.
-
-Proceed with the following steps:
 ```sh
-git clone https://github.com/Padi2312/statiker.git
+docker run -d -p 8080:8080 -v /path/to/your/files:/app/public padi2312/statiker
+```
+
+### 📦 Docker Compose
+Alternatively, deploy Statiker using `docker-compose`. Check out the `docker-compose.yml` file in the repository for guidance.
+
+### 📥 Binary
+Download pre-built binaries from the releases section for a quick start.
+
+### 🔨 Build from Source
+For those who prefer to build from source, ensure Rust and Cargo are properly set up, then follow these steps:
+
+```sh
+git clone https://github.com/statiker/statiker.git
 cd statiker
 cargo build --release
 
-# Run it with (or any different location where you build is)
-./target/release/statiker 
+./target/release/statiker
 ```
 
-# Usage 
-```
-Usage: statiker [OPTIONS] --dir <DIR>
+## 📚 Usage
 
-Options:
-  -d, --dir <DIR>          Sets the root directory to serve files from [default: "."]
-  -a, --address <ADDRESS>  Sets the address to bind the server to [default: 0.0.0.0]
-  -p, --port <PORT>        Sets the port to bind the server to [default: 8080]
-  -u, --enable_upload      Enables file upload at route '/' and saves files to root directory of server
-  -h, --help               Print help
-  -V, --version            Print version
+To get started, use the following command structure:
+
+```
+statiker [OPTIONS] --dir <DIR>
 ```
 
-# Enable upload page
-To enable the upload page, you can use the `-u` or `--enable_upload` flag. This will enable the upload page at route `/upload`. 
+Options include:
+- `-d, --dir <DIR>`: Set the root directory for file serving (default: "./public").
+- `-a, --address <ADDRESS>`: Specify the server's binding address (default: 0.0.0.0).
+- `-p, --port <PORT>`: Set the server's port (default: 8080).
+- `-u, --enable_upload`: Enable file uploads at '/upload', saving files to the server's root directory.
+- `-h, --help`: Display help information.
+- `-V, --version`: Show the version number.
 
-All files uploaded will be saved to the root directory of the server and also served by the server.
 
-> **NOTE:** In case you're uploading files with the same name, the old files will be overwritten by the new ones. (Currently working on this for a better solution.)
+## ⚙️ Environment Variables
 
+When not using command line arguments, Statiker will revert to these environment variables:
 
-# Project structure
-
-The project is divided into two separate crates:
-- `statiker`: The main crate containing the executable server for hosting files.
-- `surfer`: Library containing the server logic. (Own repository: [surfer](https://github.com/Padi2312/surfer))
+| Variable        | Description                                                    | Default    |
+| --------------- | -------------------------------------------------------------- | ---------- |
+| `ROOT_DIR`      | Root directory for file serving                                | "./public" |
+| `ADDRESS`       | Server's binding address                                       | "0.0.0.0"  |
+| `PORT`          | Server's port                                                  | 8080       |
+| `ENABLE_UPLOAD` | Enable '/upload' for file uploads, saving to the server's root | false      |

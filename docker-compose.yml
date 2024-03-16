@@ -1,0 +1,9 @@
+services:
+  statiker:
+    image: padi2312/statiker
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./statiker/sample:/app/public
+    environment:
+      - ENABLE_UPLOAD=true

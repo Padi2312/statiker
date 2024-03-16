@@ -11,7 +11,6 @@ jobs:
 
     strategy:
       matrix:
-        # You can add more, for any target you'd like!
         include:
           - build: linux
             os: ubuntu-latest
@@ -27,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          submodules: 'recursive' # Add this line to checkout submodules
 
       # Get version from cargo.toml
       - name: Get version
@@ -34,9 +35,7 @@ jobs:
         run: echo "VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
 
       - name: Install Rust
-        # Or @nightly if you want
         uses: dtolnay/rust-toolchain@stable
-        # Arguments to pass in
         with:
           # Make Rust compile to our target (defined in the matrix)
           targets: ${{ matrix.target }}
@@ -50,9 +49,8 @@ jobs:
       - name: Build
         uses: actions-rs/cargo@v1
         with:
-          # use-cross: true
           command: build
-          args: --verbose --release --target ${{ matrix.target }} --directory statiker
+          args: --verbose --release --target ${{ matrix.target }} 
 
       - name: Build archive
         shell: bash
@@ -62,13 +60,36 @@ jobs:
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.build}}" = "windows-gnu" ]; then
-            mv "statiker/target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/$binary_name.exe"
+            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname/$binary_name.exe"
             echo "ASSET=$dirname/$binary_name.exe" >> $GITHUB_ENV
           else
-            mv "statiker/target/${{ matrix.target }}/release/$binary_name" "$dirname/$binary_name"
+            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname/$binary_name"
             echo "ASSET=$dirname/$binary_name" >> $GITHUB_ENV
           fi
 
+      - name: Set up Docker Buildx
+        if: matrix.build == 'linux'
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Login Docker Hub
+        if: matrix.build == 'linux'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push docker image
+        if: matrix.build == 'linux'
+        uses: docker/build-push-action@v5
+        id: build-and-push
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          push: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/statiker:${{ env.VERSION }},docker.io/${{ secrets.DOCKERHUB_USERNAME }}/statiker:latest
+
+          
       - name: Tag commit
         run: |
           git tag ${{ env.VERSION }}
