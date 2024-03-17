@@ -41,7 +41,7 @@ Download pre-built binaries from the releases section for a quick start.
 For those who prefer to build from source, ensure Rust and Cargo are properly set up, then follow these steps:
 
 ```sh
-git clone https://github.com/statiker/statiker.git
+git clone https://github.com/padi2312/statiker.git
 cd statiker
 cargo build --release
 
