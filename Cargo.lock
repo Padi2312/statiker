@@ -869,7 +869,7 @@ dependencies = [
 
 [[package]]
 name = "statiker"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "async-std",
  "clap",
@@ -884,9 +884,9 @@ checksum = "5ee073c9e4cd00e28217186dbe12796d692868f432bf2e97ee73bed0c56dfa01"
 
 [[package]]
 name = "surfer"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb77a5b9d04d06ddc153c40f09ded63c9e04a0a8f4a98b11ed2328bcb4ccbe6b"
+checksum = "4fd6c6ea3109f77769b5b3a6e06e0a57aea95126cce15de469ff275d5e506537"
 dependencies = [
  "async-std",
  "chrono",
